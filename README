@@ -1,0 +1,31 @@
+MKCPIO is a lua script processor for preparing initmarfs cpio files.
+
+Primitives:
+
+   set_output(file):
+
+	Send output to this open lua file. If the argument is absent,
+	the output is flushed, and the output is set to stdout.
+
+   emit_directory(name, mode*, uid, gid)
+
+   emit_file(names*, source, mode, uid, gid, is_block, major, minor)
+
+   emit_node(names*, mode*, uid, gid 
+
+   emit_pipe(names*, mode*, uid, gid)
+
+   emit_socket(names*, mode*, uid, gid)
+
+   emit_symlink(names**, target, mode, uig, gid)
+
+* Names may be a single string or a table of strings for the hard
+links to this data.  Source is the location of the file to copy
+into the archive.
+
+** Names may be a single string or a table of strings for the symbolic
+links to this data.  Target is the location of the file to which to link.
+
+* Modes and be integers or integer equivalent strings.  These are
+processed via strtol, so to give an octal string, use a string of
+digits with a leading zero.
