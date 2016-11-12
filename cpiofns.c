@@ -163,7 +163,7 @@ static int emit_symlink(lua_State *L)
 	sprintf(s,"%s%08X%08X%08lX%08lX%08X%08lX"
 		"%08X%08X%08X%08X%08X%08X%08X",
 		"070701",		      /* magic */
-		ino,			      /* ino */
+		ino++,			      /* ino */
 		S_IFLNK | mode,		      /* mode */
 		(long) uid,		      /* uid */
 		(long) gid,		      /* gid */
@@ -230,7 +230,6 @@ static int emit_ipc(lua_State *L, int type)
 	emit_pad();
     }
     
-    ino++;
     return 0;
 }
 
