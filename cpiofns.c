@@ -160,11 +160,11 @@ static int emit_symlink(lua_State *L)
 	sprintf(s,"%s%08X%08X%08lX%08lX%08X%08lX"
 		"%08X%08X%08X%08X%08X%08X%08X",
 		"070701",		      /* magic */
-		ino++,			      /* ino */
+		ino,			      /* ino */
 		S_IFLNK | mode,		      /* mode */
 		(long) uid,		      /* uid */
 		(long) gid,		      /* gid */
-		nlinks,			      /* nlink */
+		1,			      /* nlink */
 		(long) default_mtime,	      /* mtime */
 		(unsigned)strlen(target) + 1, /* filesize */
 		3,			      /* major */
@@ -180,6 +180,7 @@ static int emit_symlink(lua_State *L)
 	emit_pad();
     }
 
+    ino++;
     return 0;
 }
 
@@ -401,7 +402,7 @@ static int emit_file(lua_State *L)
 
 	if (size) {
 	    if (fwrite(filebuf, size, 1, cpio_output) != 1) {
-		fprintf(stderr, "writing filebuf failed\n");
+		warn("writing filebuf failed\n");
 		goto error;
 	    }
 	    offset += size;
