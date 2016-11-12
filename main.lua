@@ -1,22 +1,24 @@
-for _,key in pairs { 'emit_dir','emit_pipe','emit_socket',
-		     'emit_node', 'emit_symlink', 'emit_file' } do
-   local fn = cpio[key]
-   cpio[key] = function(file, ...)
-      return fn(type(file) == 'string' and { file } or file, ...)
-   end
-end
+local program = arg[1]:match '.*/(.*)$' or arg[1]
+table.remove(arg, 1)
 
-if arg[2] == '-h' or arg[2] == '--help' then
-   print ([[
+help = [[
 Command format:
 
-	]]..arg[1]..[[ [-i] script ... [-- script_arg ...]
+	]]..program..[[ [-h] [--help] [-v version] [-i] script ... [-- arg ...]
 
-]]..arg[1]..[[ ends up in interactive mode if the '-i' option is given or
+]]..program..[[ ends up in interactive mode if the '-i' option is given or
 if there are no scripts given.
 
-Script_args are available the the scripts and interactive session
+Args are available the the scripts and interactive session
 in the arg table.
+
+Version:
+
+   no version  Bump the patch.
+   =           Make no change.
+   +           Bump the revision.
+   ++          Bump the version.
+   Xx.y[.z]    Set the code (X) and version.
 
 Defined functions:
 
@@ -37,6 +39,8 @@ Defined functions:
 
    emit_symlink(names**, target, mode, uig, gid)
 
+   new_version(old_version)
+
 * Names may be a single string or a table of strings for the hard
 links to this data.  Source is the location of the file to copy
 into the archive.
@@ -48,30 +52,115 @@ to which to link.
 * Modes and be integers or integer equivalent strings.  These are
 processed via strtol, so to give an octal string, use a string of
 digits with a leading zero.
-]])
-   os.exit(0)
+]]
+
+local function die(msg)
+   print(message)
+   os.exit(1)
 end
 
--- Ditch program name
-table.remove(arg, 1)
+local version_operation
+local default_class='v'
 
-local interactive
-if arg[1] == '-i' then
-   interactive = true
-   table.remove(arg, 1)
+function cpio.new_version(old_version)
+   local version = old_version or classification..'0.0.0'
+   local new_class,major,minor = version:match '^([a-zA-Z])([0-9]*)%.([0-9]*)'
+   local patch
+   local class
+   if not major then
+      major,minor,patch=0,0,0
+      class = default_class
+   else
+      class = class_opt or new_class
+      patch = version:match '^.[0-9]*%.[0-9]*%.([0-9]*)$' or 0
+   end
+   if not version_operation then
+      patch = 1 + patch
+   elseif version_operation == '+' then
+      print 'Revision bumped!'
+      minor = 1 + minor
+      patch = 0
+   elseif version_operation == '++' then
+      print 'Major version bumped'
+      major = 1 + major
+      minor = 0
+      patch = 0
+   elseif version_operation == '=' then
+      print 'Version unchanged!'
+   elseif version_operation:match '^[0-9]' then
+      print 'Oh bother'
+      major,minor = version_operation:match '^([0-9]*)%.([0-9]*)'
+      patch = version_operation:match '^[0-9]*%.[0-9]*%.(.*)$' or '0'
+      if not major or not patch:match '^[0-9]+$' then
+	 die('Invalid version set')
+      end
+   else
+      die('Invalid version operation: '..version_operation)
+   end
+   return class,major,minor,patch
 end
 
-while arg[1] do
-   local first = arg[1]
+local function assert_argument(option, optmatch)
+   local optarg
+   if option == optmatch then
+      optarg = arg[1]
+      if not optarg or optarg:match '^-' then
+	 die('Missing argument for '..option)
+      end
+      table.remove(arg,1)
+   else
+      optarg=option:match('^'..optmatch..'(.*)$')
+   end
+   return optarg
+end
+   
+while arg[1] and arg[1]:match '^-' do
+   local opt=arg[1]
    table.remove(arg, 1)
-   if first == '--' then break end
-   dofile(first)
-   interactive = interactive or false
+   if opt == '-h' or opt == '--help' then
+      print(help)
+      os.exit(0)
+   elseif opt == '-i' then
+      interactive = true
+   elseif opt:match '^-s' then
+      class_opt = assert_argument(opt, '-s')
+      if not class_opt:match '^[a-zA-Z]' then
+	 die('Bad class: '..class_opt)
+      end
+   elseif opt:match '^-v' then
+      version_operation = assert_argument(opt, '-v')
+   elseif opt == '--' then
+      no_scripts = true
+      interactive = true
+   else
+      print('Invalid option: '..opt)
+      os.exit(1)
+   end
+end
+
+help = nil
+
+for _,key in pairs { 'emit_dir','emit_pipe','emit_socket',
+		     'emit_node', 'emit_symlink', 'emit_file' } do
+   local fn = cpio[key]
+   cpio[key] = function(file, ...)
+      return fn(type(file) == 'string' and { file } or file, ...)
+   end
+end
+
+if not no_scripts then
+   while arg[1] do
+      local first = arg[1]
+      table.remove(arg, 1)
+      if first == '--' then break end
+      dofile(first)
+      interactive = interactive or false
+   end
 end
 
 interactive = interactive ~= false
 
-if interactive or #arg == 1 then
+if interactive then
    local command, next_line, chunk, error
    io.write('mkcpio/Lua shell:\n')
    repeat
