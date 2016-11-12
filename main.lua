@@ -1,5 +1,5 @@
 for _,key in pairs { 'emit_dir','emit_pipe','emit_socket',
-		     'emit_node', 'emit_symlink' } do
+		     'emit_node', 'emit_symlink', 'emit_file' } do
    local fn = cpio[key]
    cpio[key] = function(file, ...)
       return fn(type(file) == 'string' and { file } or file, ...)
