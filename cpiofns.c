@@ -412,8 +412,8 @@ static int emit_file(lua_State *L)
 		    goto error;
 		}
 		size -= this_read;
+		offset += this_read;
 	    }
-	    offset += size;
 	    emit_pad();
 	}
     }
