@@ -14,6 +14,9 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+// Process files in 16MB clumps.
+#define FILE_CLUMP (16 * 1024 * 1024)
+
 typedef unsigned int UINT;
 
 static FILE *cpio_output;
@@ -358,13 +361,7 @@ static int emit_file(lua_State *L)
 	goto error;
     }
 
-    filebuf = realloc(filebuf, buf.st_size);
-
-    retval = read (file, filebuf, buf.st_size);
-    if (retval < 0) {
-	warn("Can not read %s file\n", location);
-	goto error;
-    }
+    filebuf = realloc(filebuf, FILE_CLUMP);
 
     size = 0;
     
@@ -401,9 +398,20 @@ static int emit_file(lua_State *L)
 	emit_pad();
 
 	if (size) {
-	    if (fwrite(filebuf, size, 1, cpio_output) != 1) {
-		warn("writing filebuf failed\n");
-		goto error;
+	    while (size > 0) {
+		int this_read = size > FILE_CLUMP ? FILE_CLUMP : size;
+
+		retval = read (file, filebuf, this_read);
+		if (retval < 0) {
+		    warn("Can not read %s file\n", location);
+		    goto error;
+		}
+
+		if (fwrite(filebuf, this_read, 1, cpio_output) != 1) {
+		    warn("writing filebuf failed\n");
+		    goto error;
+		}
+		size -= this_read;
 	    }
 	    offset += size;
 	    emit_pad();
