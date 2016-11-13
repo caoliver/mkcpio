@@ -12,7 +12,9 @@ if there are no scripts given.
 Args are available the the scripts and interactive session
 in the arg table.
 
-Class: A single alphabetic character version class.  (default is 'v')
+Class: A single alphabetic character version class.
+The default is to preserve the old class code or set to v for new
+versions.
 
 Version:
 
@@ -58,12 +60,12 @@ processed via strtol, so to give an octal string, use a string of
 digits with a leading zero.
 ]]
 
-local function die(msg)
+local function die(message)
    print(message)
    os.exit(1)
 end
 
-local version_operation
+local version_parameter
 local default_class='v'
 
 local function new_version(old_version)
@@ -78,30 +80,36 @@ local function new_version(old_version)
       class = class_opt or new_class
       patch = version:match '^.[0-9]*%.[0-9]*%.([0-9]*)$' or 0
    end
-   if not version_operation then
+   if not version_parameter then
       patch = 1 + patch
-   elseif version_operation == '+' then
+   elseif version_parameter == '+' then
       print 'Revision bumped!'
       minor = 1 + minor
       patch = 0
-   elseif version_operation == '++' then
+   elseif version_parameter == '++' then
       print 'Major version bumped'
       major = 1 + major
       minor = 0
       patch = 0
-   elseif version_operation == '=' then
+   elseif version_parameter == '=' then
       print 'Version unchanged!'
-   elseif version_operation:match '^[0-9]' then
-      major,minor = version_operation:match '^([0-9]*)%.([0-9]*)'
-      patch = version_operation:match '^[0-9]*%.[0-9]*%.(.*)$' or '0'
-      if not major or not patch:match '^[0-9]+$' then
-	 die('Invalid version set')
-      end
-   else
-      die('Invalid version operation: '..version_operation)
+   elseif version_parameter:match '^[a-zA-Z][0-9]' then
+      class,major,minor =
+	 version_parameter:match '^([a-zA-Z])([0-9]*)%.([0-9]*)'
+      patch = version_parameter:match '^[a-zA-Z][0-9]*%.[0-9]*%.(.*)$' or '0'
    end
-   return string.format(patch == 0 and "%s%s.%s" or "%s%s.%s.%s",
-			class,major,minor,patch)
+   local version=string.format(tostring(patch) == '0' and "%s%s.%s" or "%s%s.%s.%s",
+			       class,major,minor,patch)
+   print("Version is "..version)
+   return version
+end
+
+local function check_version_parameter(parm)
+   if parm ~= '=' and parm ~= '+' and parm ~= '++' and
+      not parm:match '^[a-zA-Z][0-9]*%.[0-9]*$' and
+      not parm:match '^[a-zA-Z][0-9]*%.[0-9]*%.[0-9]*$' then
+	 die('Invalid version parameter: '..version_parameter)
+   end
 end
 
 
@@ -150,7 +158,8 @@ while arg[1] and arg[1]:match '^-' do
 	 die('Bad class: '..class_opt)
       end
    elseif opt:match '^-v' then
-      version_operation = assert_argument(opt, '-v')
+      version_parameter = assert_argument(opt, '-v')
+      check_version_parameter(version_parameter)
    elseif opt == '--' then
       no_scripts = true
       interactive = true
