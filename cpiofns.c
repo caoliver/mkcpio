@@ -447,7 +447,25 @@ static int set_output(lua_State *L)
     return 0;
 }
 
+static int time_now(lua_State *L)
+{
+    char outbuf[256];
+    time_t t;
+    struct tm tm;
+    const char *format = luaL_checkstring(L, 1);
+
+    t = time(NULL);
+    localtime_r(&t, &tm);
+
+    if (strftime(outbuf, sizeof(outbuf), format, &tm) != 0)
+	lua_pushstring(L, outbuf);
+    else
+	lua_pushnil(L);
+    return 1;
+}
+
 struct luaL_Reg cpio_fns[] = {
+    { "time_now", time_now },
     { "set_output", set_output },
     { "emit_directory", emit_directory },
     { "emit_file", emit_file },

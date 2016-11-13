@@ -41,6 +41,8 @@ Defined functions:
 
    new_version(old_version)
 
+   time_now(strftime_format)
+
 * Names may be a single string or a table of strings for the hard
 links to this data.  Source is the location of the file to copy
 into the archive.
@@ -100,6 +102,8 @@ function cpio.new_version(old_version)
    return string.format(patch == 0 and "%s%s.%s" or "%s%s.%s.%s",
 			class,major,minor,patch)
 end
+
+
 
 local function assert_argument(option, optmatch)
    local optarg
