@@ -97,7 +97,8 @@ function cpio.new_version(old_version)
    else
       die('Invalid version operation: '..version_operation)
    end
-   return class,major,minor,patch
+   return string.format(patch == 0 and "%s%s.%s" or "%s%s.%s.%s",
+			class,major,minor,patch)
 end
 
 local function assert_argument(option, optmatch)
