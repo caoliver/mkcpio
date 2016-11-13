@@ -1,4 +1,4 @@
-local program = arg[1]:match '.*/(.*)$' or arg[1]
+local program_path, program = arg[1], arg[1]:match '.*/(.*)$' or arg[1]
 table.remove(arg, 1)
 
 help = [[
@@ -43,6 +43,12 @@ Defined functions:
 
    time_now(strftime_format)
 
+   realpath(path)
+
+   program_directory()
+
+   chdir(path)
+
 * Names may be a single string or a table of strings for the hard
 links to this data.  Source is the location of the file to copy
 into the archive.
@@ -55,6 +61,11 @@ to which to link.
 processed via strtol, so to give an octal string, use a string of
 digits with a leading zero.
 ]]
+
+function cpio.program_directory()
+   local realprogpath = cpio.realpath(program_path)
+   return realprogpath:match '^(.*)/[^/]*'
+end
 
 local function die(msg)
    print(message)

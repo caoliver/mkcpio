@@ -464,7 +464,33 @@ static int time_now(lua_State *L)
     return 1;
 }
 
+static int realpath_wrapper(lua_State *L)
+{
+    const char *filepath = luaL_checkstring(L, 1);
+    char *path;
+
+    path = realpath(filepath, NULL);
+    if (path) {
+	lua_pushstring(L, path);
+	free(path);
+    } else
+	lua_pushnil(L);
+    return 1;
+}
+
+static int chdir_wrapper(lua_State *L)
+{
+    const char *dirpath = luaL_checkstring(L, 1);
+    if (chdir(dirpath) == 0)
+	lua_pushnil(L);
+    else
+	lua_pushinteger(L, errno);
+    return 1;
+}
+
 struct luaL_Reg cpio_fns[] = {
+    { "chdir", chdir_wrapper },
+    { "realpath", realpath_wrapper },
     { "time_now", time_now },
     { "set_output", set_output },
     { "emit_directory", emit_directory },
