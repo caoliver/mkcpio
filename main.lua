@@ -190,10 +190,14 @@ if not no_scripts then
       table.remove(arg, 1)
       if first == '--' then break end
       local scriptpath=realpath(first)
-      local dirname,basename=scriptpath:match '^(.*)/([^/]*)'
-      chdir(dirname)
-      dofile(basename)
-      chdir(curdir)
+      if scriptpath then
+	 local dirname,basename=scriptpath:match '^(.*)/([^/]*)'
+	 chdir(dirname)
+	 dofile(basename)
+	 chdir(curdir)
+      else
+	 die('Missing or unreadable mkcpio script: '..first)
+      end
       interactive = interactive or false
    end
 end
