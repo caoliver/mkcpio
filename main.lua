@@ -43,6 +43,8 @@ Defined functions:
 
    emit_symlink(names**, target, mode, uig, gid)
 
+   emit_trailer()
+
    new_version(version_file)
 
    time_now(strftime_format)
