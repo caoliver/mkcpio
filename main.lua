@@ -1,4 +1,4 @@
-local program_path, program = arg[1], arg[1]:match '.*/(.*)$' or arg[1]
+local program = arg[1], arg[1]:match '.*/(.*)$' or arg[1]
 table.remove(arg, 1)
 
 help = [[
@@ -39,15 +39,9 @@ Defined functions:
 
    emit_symlink(names**, target, mode, uig, gid)
 
-   new_version(old_version)
+   new_version(version_file)
 
    time_now(strftime_format)
-
-   realpath(path)
-
-   program_directory()
-
-   chdir(path)
 
 * Names may be a single string or a table of strings for the hard
 links to this data.  Source is the location of the file to copy
@@ -62,11 +56,6 @@ processed via strtol, so to give an octal string, use a string of
 digits with a leading zero.
 ]]
 
-function cpio.program_directory()
-   local realprogpath = cpio.realpath(program_path)
-   return realprogpath:match '^(.*)/[^/]*'
-end
-
 local function die(msg)
    print(message)
    os.exit(1)
@@ -75,8 +64,8 @@ end
 local version_operation
 local default_class='v'
 
-function cpio.new_version(old_version)
-   local version = old_version or classification..'0.0.0'
+local function new_version(old_version)
+   local version = old_version or (class_opt or default_class)..'0.0.0'
    local new_class,major,minor = version:match '^([a-zA-Z])([0-9]*)%.([0-9]*)'
    local patch
    local class
@@ -101,7 +90,6 @@ function cpio.new_version(old_version)
    elseif version_operation == '=' then
       print 'Version unchanged!'
    elseif version_operation:match '^[0-9]' then
-      print 'Oh bother'
       major,minor = version_operation:match '^([0-9]*)%.([0-9]*)'
       patch = version_operation:match '^[0-9]*%.[0-9]*%.(.*)$' or '0'
       if not major or not patch:match '^[0-9]+$' then
@@ -114,6 +102,22 @@ function cpio.new_version(old_version)
 			class,major,minor,patch)
 end
 
+
+function cpio.new_version(version_file)
+   local verfile=io.open(version_file)
+   local verstring
+   if verfile then
+      verstring=verfile:read '*l'
+      verfile:close()
+   end
+   local version=new_version(verstring)
+   verfile=io.open(version_file, 'w')
+   if verfile then
+      verfile:write(version..'\n')
+      verfile:close()
+   end
+   return version
+end
 
 
 local function assert_argument(option, optmatch)
@@ -164,12 +168,19 @@ for _,key in pairs { 'emit_dir','emit_pipe','emit_socket',
    end
 end
 
+local realpath,chdir=cpio.realpath,cpio.chdir
+local curdir=cpio.getcwd()
+cpio.getcwd,cpio.realpath,cpio.chdir=nil,nil,nil
 if not no_scripts then
    while arg[1] do
       local first = arg[1]
       table.remove(arg, 1)
       if first == '--' then break end
-      dofile(first)
+      local scriptpath=realpath(first)
+      local dirname,basename=scriptpath:match '^(.*)/([^/]*)'
+      chdir(dirname)
+      dofile(basename)
+      chdir(curdir)
       interactive = interactive or false
    end
 end

@@ -488,8 +488,19 @@ static int chdir_wrapper(lua_State *L)
     return 1;
 }
 
+static int getcwd_wrapper(lua_State *L)
+{
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, PATH_MAX))
+	lua_pushstring(L, cwd);
+    else
+	lua_pushnil(L);
+    return 1;
+}
+
 struct luaL_Reg cpio_fns[] = {
     { "chdir", chdir_wrapper },
+    { "getcwd", getcwd_wrapper },
     { "realpath", realpath_wrapper },
     { "time_now", time_now },
     { "set_output", set_output },
