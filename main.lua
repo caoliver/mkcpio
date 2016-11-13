@@ -4,13 +4,15 @@ table.remove(arg, 1)
 help = [[
 Command format:
 
-	]]..program..[[ [-h] [--help] [-v version] [-i] script ... [-- arg ...]
+	]]..program..[[ [-c class] [-v version] [-i] script ... [-- arg ...]
 
 ]]..program..[[ ends up in interactive mode if the '-i' option is given or
 if there are no scripts given.
 
 Args are available the the scripts and interactive session
 in the arg table.
+
+Class: A single alphabetic character version class.  (default is 'v')
 
 Version:
 
@@ -142,8 +144,8 @@ while arg[1] and arg[1]:match '^-' do
       os.exit(0)
    elseif opt == '-i' then
       interactive = true
-   elseif opt:match '^-s' then
-      class_opt = assert_argument(opt, '-s')
+   elseif opt:match '^-c' then
+      class_opt = assert_argument(opt, '-c')
       if not class_opt:match '^[a-zA-Z]' then
 	 die('Bad class: '..class_opt)
       end
