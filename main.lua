@@ -125,7 +125,7 @@ function cpio.new_version(version_file)
    local version=new_version(verstring)
    verfile=io.open(version_file, 'w')
    if verfile then
-      verfile:write(version..'\n')
+      verfile:write(version,'\n')
       verfile:close()
    end
    return version
