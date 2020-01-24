@@ -1,4 +1,4 @@
-MKCPIO is a lua script processor for preparing initmarfs cpio files.
+MKCPIO is a lua script processor for preparing initramfs cpio files.
 
 Primitives:
 
